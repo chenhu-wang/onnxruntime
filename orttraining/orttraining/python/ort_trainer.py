@@ -16,6 +16,10 @@ import warnings
 from .checkpointing_utils import list_checkpoint_files, get_checkpoint_name, CombineZeroCheckpoint
 import onnxruntime.capi.pt_patch
 
+from onnxruntime.capi.symbolic_shape_infer import SymbolicShapeInference
+import tempfile
+import shutil
+
 DEFAULT_OPSET_VERSION = 12
 
 class IODescription():
@@ -539,7 +543,7 @@ class ORTTrainer():
                  global_step=0, get_lr_this_step=None, loss_scaler=None, deepspeed_zero_stage=0,
                  enable_grad_norm_clip=True, frozen_weights=[], _opset_version=DEFAULT_OPSET_VERSION,
                  _enable_internal_postprocess=True, _extra_postprocess=None, _use_deterministic_compute=False,
-                 use_invertible_layernorm_grad=False):
+                 use_invertible_layernorm_grad=False, run_symbolic_shape_infer=False, save_model_dir=None):
         super(ORTTrainer, self).__init__()
         """
         Initialize ORTTrainer.
@@ -607,6 +611,10 @@ class ORTTrainer():
                Defaults to None
             use_invertible_layernorm_grad: use invertible layernorm grad
                Defaults to False
+            run_symbolic_shape_infer: run symbolic shape inference
+               Defaults to False
+            save_model_dir: directory to save converted/optimized onnx models
+               Defaults to empty
         """
         warnings.warn('DISCLAIMER: This is an early version of an experimental training API and it is subject to change. DO NOT create production applications with it')
         self.is_train = True
@@ -669,6 +677,8 @@ class ORTTrainer():
         self.state_dict_ = None
         self._use_deterministic_compute = _use_deterministic_compute
         self.use_invertible_layernorm_grad = use_invertible_layernorm_grad
+        self.run_symbolic_shape_infer = run_symbolic_shape_infer
+        self.save_model_dir = save_model_dir
 
         # use this special string to workaround a corner case that external loss_scale is passed into train_step as kwargs.
         # see prepare_input_and_fetches for more details.
@@ -681,6 +691,25 @@ class ORTTrainer():
             return
 
         self._verify_fully_optimized_model(self.onnx_model_)
+
+        # run symbolic shape inference if needed
+        if self.run_symbolic_shape_infer:
+            model_dir = self.save_model_dir if self.save_model_dir else tempfile.mkdtemp()
+            model_path = os.path.join(model_dir, 'model.onnx')
+            fused_model_path = os.path.join(model_dir, 'fused_model.onnx')
+            onnx.save(self.onnx_model_, model_path)
+
+            so = ort.SessionOptions()
+            so.optimized_model_filepath=fused_model_path
+            so.graph_optimization_level=ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
+            sess = ort.InferenceSession(model_path, sess_options=so)
+
+            SymbolicShapeInference.infer_shapes(fused_model_path, fused_model_path, auto_merge=True)
+            self.onnx_model_ = onnx.load(fused_model_path)
+
+            if not self.save_model_dir: # clean up temp dir after done
+                shutil.rmtree(model_dir)
+
         self.session, self.train_io_binding, self.eval_io_binding, self.output_name, _, self.output_types = \
             create_ort_training_session_with_optimizer(
                 self.onnx_model_, self.device_,

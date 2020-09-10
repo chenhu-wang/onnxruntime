@@ -162,6 +162,7 @@ if (onnxruntime_ENABLE_TRAINING)
   file(GLOB onnxruntime_python_srcs CONFIGURE_DEPENDS
     "${ONNXRUNTIME_ROOT}/python/*.py"
     "${ORTTRAINING_SOURCE_DIR}/python/*.py"
+    "${ONNXRUNTIME_ROOT}/core/providers/nuphar/scripts/symbolic_shape_infer.py"
   )
 else()
   file(GLOB onnxruntime_python_srcs CONFIGURE_DEPENDS
