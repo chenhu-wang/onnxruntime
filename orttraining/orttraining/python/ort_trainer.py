@@ -324,8 +324,14 @@ def convert_model_loss_fn_to_onnx(model, loss_fn, model_desc, device, inputs, op
         import copy
         # Deepcopy inputs, since input values may change after model run.
         sample_inputs_copy = copy.deepcopy(sample_inputs)
-        # Deepcopy model, in case model is stateful and changes after model run.
-        model_copy = copy.deepcopy(model)
+        try:
+            # Deepcopy model, in case model is stateful and changes after model run.
+            model_copy = copy.deepcopy(model)
+        except Exception:
+            model_copy = model
+            warnings.warn("This model cannot be deep copied (or pickled), which is a required step for stateful models to be properly exported to ONNX."
+                          " Compute will continue, but unexpected results may occur!")
+
         sample_outputs = model_copy(*sample_inputs_copy)
     if isinstance(sample_outputs, torch.Tensor):
         sample_outputs = [sample_outputs]
@@ -692,17 +698,17 @@ class ORTTrainer():
 
         self._verify_fully_optimized_model(self.onnx_model_)
 
-        # run symbolic shape inference if needed
         if self.run_symbolic_shape_infer:
             model_dir = self.save_model_dir if self.save_model_dir else tempfile.mkdtemp()
             model_path = os.path.join(model_dir, 'model.onnx')
             fused_model_path = os.path.join(model_dir, 'fused_model.onnx')
             onnx.save(self.onnx_model_, model_path)
 
+            # run ORT graph optimization to create fused nodes like LayerNormalization
             so = ort.SessionOptions()
             so.optimized_model_filepath=fused_model_path
             so.graph_optimization_level=ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
-            sess = ort.InferenceSession(model_path, sess_options=so)
+            sess = ort.InferenceSession(model_path, sess_options=so, providers=['CPUExecutionProvider'])
 
             SymbolicShapeInference.infer_shapes(fused_model_path, fused_model_path, auto_merge=True)
             self.onnx_model_ = onnx.load(fused_model_path)
