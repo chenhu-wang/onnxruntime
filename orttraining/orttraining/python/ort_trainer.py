@@ -698,17 +698,16 @@ class ORTTrainer():
 
         self._verify_fully_optimized_model(self.onnx_model_)
 
-        if self.run_symbolic_shape_infer:
+        if self.save_model_dir or self.run_symbolic_shape_infer:
             model_dir = self.save_model_dir if self.save_model_dir else tempfile.mkdtemp()
             model_path = os.path.join(model_dir, 'model.onnx')
-            syminf_model_path = os.path.join(model_dir, 'model_syminf.onnx')
             onnx.save(self.onnx_model_, model_path)
-
-            SymbolicShapeInference.infer_shapes(model_path, syminf_model_path, auto_merge=True)
-            self.onnx_model_ = onnx.load(syminf_model_path)
-
-            if not self.save_model_dir: # clean up temp dir after done
-                shutil.rmtree(model_dir)
+            if self.run_symbolic_shape_infer:
+                syminf_model_path = os.path.join(model_dir, 'model_syminf.onnx')
+                SymbolicShapeInference.infer_shapes(model_path, syminf_model_path, auto_merge=True)
+                self.onnx_model_ = onnx.load(syminf_model_path)
+                if not self.save_model_dir: # clean up temp dir after done
+                    shutil.rmtree(model_dir)
 
         self.session, self.train_io_binding, self.eval_io_binding, self.output_name, _, self.output_types = \
             create_ort_training_session_with_optimizer(
