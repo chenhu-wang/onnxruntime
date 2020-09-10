@@ -701,17 +701,11 @@ class ORTTrainer():
         if self.run_symbolic_shape_infer:
             model_dir = self.save_model_dir if self.save_model_dir else tempfile.mkdtemp()
             model_path = os.path.join(model_dir, 'model.onnx')
-            fused_model_path = os.path.join(model_dir, 'fused_model.onnx')
+            syminf_model_path = os.path.join(model_dir, 'model_syminf.onnx')
             onnx.save(self.onnx_model_, model_path)
 
-            # run ORT graph optimization to create fused nodes like LayerNormalization
-            so = ort.SessionOptions()
-            so.optimized_model_filepath=fused_model_path
-            so.graph_optimization_level=ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
-            sess = ort.InferenceSession(model_path, sess_options=so, providers=['CPUExecutionProvider'])
-
-            SymbolicShapeInference.infer_shapes(fused_model_path, fused_model_path, auto_merge=True)
-            self.onnx_model_ = onnx.load(fused_model_path)
+            SymbolicShapeInference.infer_shapes(model_path, syminf_model_path, auto_merge=True)
+            self.onnx_model_ = onnx.load(syminf_model_path)
 
             if not self.save_model_dir: # clean up temp dir after done
                 shutil.rmtree(model_dir)

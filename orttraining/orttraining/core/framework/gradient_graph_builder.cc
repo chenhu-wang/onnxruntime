@@ -107,6 +107,7 @@ NodeSet GradientGraphBuilder::ReverseBFS(const NodeSet& nodes) {
 }
 
 Status GradientGraphBuilder::CheckNodeArgsReachable(const NodeSet& reachable_nodes) {
+  std::unordered_set<const NodeArg*> unreachables;
   for (const NodeArg* node_arg : x_node_args_) {
     auto nodes = graph_->GetConsumerNodes(node_arg->Name());
 
@@ -118,10 +119,17 @@ Status GradientGraphBuilder::CheckNodeArgsReachable(const NodeSet& reachable_nod
       }
     }
     if (!reachable) {
-      return ORT_MAKE_STATUS(ONNXRUNTIME, INVALID_ARGUMENT,
-                             "Cannot compute the partial derivative for '", node_arg->Name(),
-                             "' as it's unreachable from the output node(s).");
+      unreachables.insert(node_arg);
     }
+  }
+  if (!unreachables.empty()) {
+      std::ostringstream oss;
+      for(const NodeArg* node_arg : unreachables) {
+        oss << "\"" << node_arg->Name() << "\", ";
+      }
+      return ORT_MAKE_STATUS(ONNXRUNTIME, INVALID_ARGUMENT,
+                             "Cannot compute the partial derivative for [", oss.str(),
+                             "] as they are unreachable from the output node(s).");
   }
   return Status::OK();
 }

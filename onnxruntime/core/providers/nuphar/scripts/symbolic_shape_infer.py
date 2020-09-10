@@ -47,7 +47,7 @@ def as_scalar(x):
         assert len(x) == 1
         return x[0]
     elif type(x) == np.ndarray:
-        return np.asscalar(x)
+        return x.item()
     else:
         return x
 
@@ -80,6 +80,7 @@ class SymbolicShapeInference:
             'CategoryMapper'        : self._infer_CategoryMapper,
             'Compress'              : self._infer_Compress,
             'Concat'                : self._infer_Concat,
+            'Constant'              : self._infer_Constant,
             'ConstantOfShape'       : self._infer_ConstantOfShape,
             'Conv'                  : self._infer_Conv,
             'CumSum'                : self._pass_on_shape_and_type,
@@ -201,7 +202,7 @@ class SymbolicShapeInference:
 
         # returns True if no more ready nodes
         def _insert_ready_nodes():
-            ready_nodes = [pn for pn in pending_nodes if all([i in defined for i in pn.input if i])]
+            ready_nodes = [pn for pn in pending_nodes if len(pn.input) == 0 or all([i in defined for i in pn.input if i])]
             for rn in ready_nodes:
                 self.out_mp_.graph.node.add().CopyFrom(rn)
                 for o in rn.output:
@@ -209,15 +210,8 @@ class SymbolicShapeInference:
                 pending_nodes.remove(rn)
             return not ready_nodes
 
-        # constant op -> initializer, topological sort
         for in_n in in_mp.graph.node:
-            if in_n.op_type == 'Constant':
-                t = get_attribute(in_n, 'value')
-                t.name = in_n.output[0]
-                self.out_mp_.graph.initializer.add().CopyFrom(t)
-                defined.add(t.name)
-            else:
-                pending_nodes.append(in_n)
+            pending_nodes.append(in_n)
             _insert_ready_nodes()
 
         while pending_nodes:
@@ -409,7 +403,7 @@ class SymbolicShapeInference:
                 if len(v.shape) > 1:
                     new_v = None # ignore value for rank > 1
                 elif len(v.shape) == 0:
-                    new_v = int(np.asscalar(v))
+                    new_v = int(v.item())
                 else:
                     assert len(v.shape) == 1
                     new_v = [int(vv) for vv in v]
@@ -647,6 +641,12 @@ class SymbolicShapeInference:
         vi = self.known_vi_[node.output[0]]
         vi.CopyFrom(helper.make_tensor_value_info(node.output[0], vi.type.tensor_type.elem_type, get_shape_from_sympy_shape(sympy_shape)))
 
+    def _infer_Constant(self, node):
+        t = get_attribute(node, 'value')
+        # update sympy data if output type is int
+        if t.data_type in [onnx.TensorProto.INT64, onnx.TensorProto.INT32]:
+            self.sympy_data_[node.output[0]] = numpy_helper.to_array(t)
+
     def _infer_ConstantOfShape(self, node):
         sympy_shape = self._get_int_values(node)[0]
         vi = self.known_vi_[node.output[0]]
@@ -655,7 +655,7 @@ class SymbolicShapeInference:
                 sympy_shape = [sympy_shape]
             self._update_computed_dims(sympy_shape)
             # update sympy data if output type is int, and shape is known
-            if vi.type.tensor_type.elem_type == onnx.TensorProto.INT64 and all([is_literal(x) for x in sympy_shape]):
+            if vi.type.tensor_type.elem_type in [onnx.TensorProto.INT64, onnx.TensorProto.INT32] and all([is_literal(x) for x in sympy_shape]):
                 self.sympy_data_[node.output[0]] = np.ones([int(x) for x in sympy_shape], dtype=np.int64) * numpy_helper.to_array(get_attribute(node, 'value', 0))
         else:
             # create new dynamic shape
