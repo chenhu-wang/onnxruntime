@@ -643,9 +643,7 @@ class SymbolicShapeInference:
 
     def _infer_Constant(self, node):
         t = get_attribute(node, 'value')
-        # update sympy data if output type is int
-        if t.data_type in [onnx.TensorProto.INT64, onnx.TensorProto.INT32]:
-            self.sympy_data_[node.output[0]] = numpy_helper.to_array(t)
+        self.sympy_data_[node.output[0]] = numpy_helper.to_array(t)
 
     def _infer_ConstantOfShape(self, node):
         sympy_shape = self._get_int_values(node)[0]
@@ -1065,10 +1063,7 @@ class SymbolicShapeInference:
                                                   get_shape_from_sympy_shape(new_sympy_shape)))
 
         # handle sympy_data if needed, for slice in shape computation
-        if node.input[0] in self.sympy_data_:
-            assert [0] == axes
-            assert len(starts) == 1
-            assert len(ends) == 1
+        if node.input[0] in self.sympy_data_ and [0] == axes and len(starts) == 1 and len(ends) == 1:
             self.sympy_data_[node.output[0]] = self.sympy_data_[node.input[0]][starts[0]:ends[0]]
 
     def _infer_SoftmaxCrossEntropyLoss(self, node):
