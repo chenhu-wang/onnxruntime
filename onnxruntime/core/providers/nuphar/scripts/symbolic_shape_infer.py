@@ -681,8 +681,8 @@ class SymbolicShapeInference:
         vi.CopyFrom(helper.make_tensor_value_info(node.output[0],
                                                   vi.type.tensor_type.elem_type,
                                                   data_shape[:axis] + indices_shape + data_shape[axis+1:]))
-        if node.input[0] in self.sympy_data_:
-            assert 0 == get_attribute(node, 'axis', 0) # only handle 1D sympy compute
+         # for 1D input, do some sympy compute
+        if node.input[0] in self.sympy_data_ and len(data_shape) == 1 and 0 == get_attribute(node, 'axis', 0):
             idx = self._get_value(node, 1)
             data = self.sympy_data_[node.input[0]]
             if type(data) == list:
