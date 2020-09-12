@@ -363,7 +363,7 @@ class TestNuphar(unittest.TestCase):
         # run onnx_test_runner to verify results
         # use -M to disable memory pattern
         onnx_test_runner = os.path.join(cwd, 'onnx_test_runner')
-        subprocess.run([onnx_test_runner, '-e', 'nuphar', '-M', '-n', 'bidaf', cwd], check=True, cwd=cwd)
+        subprocess.run([onnx_test_runner, '-e', 'nuphar', '-M', '-c', '1', '-j', '1', '-n', 'bidaf', cwd], check=True, cwd=cwd)
 
         # test AOT on the quantized model
         if os.name not in ['nt', 'posix']:
