@@ -198,24 +198,15 @@ class SymbolicShapeInference:
         self.out_mp_ = out_mp
 
         defined = set([i.name for i in list(in_mp.graph.input) + list(in_mp.graph.initializer)])
-        pending_nodes = []
-
-        # returns True if no more ready nodes
-        def _insert_ready_nodes():
-            ready_nodes = [pn for pn in pending_nodes if len(pn.input) == 0 or all([i in defined for i in pn.input if i])]
-            for rn in ready_nodes:
-                self.out_mp_.graph.node.add().CopyFrom(rn)
-                for o in rn.output:
-                    defined.add(o)
-                pending_nodes.remove(rn)
-            return not ready_nodes
-
-        for in_n in in_mp.graph.node:
-            pending_nodes.append(in_n)
-            _insert_ready_nodes()
+        pending_nodes = list(in_mp.graph.node)
 
         while pending_nodes:
-            if _insert_ready_nodes():
+            ready_nodes = [pn for pn in pending_nodes if not pn.input or all([i in defined for i in pn.input if i])]
+            for rn in ready_nodes:
+                self.out_mp_.graph.node.add().CopyFrom(rn)
+                defined.update(rn.output)
+                pending_nodes.remove(rn)
+            if not ready_nodes:
                 break
 
         if pending_nodes and self.verbose_ > 0:
