@@ -192,27 +192,8 @@ class SymbolicShapeInference:
                         d.dim_param = v
 
     def _preprocess(self, in_mp):
-        out_mp = onnx.ModelProto()
-        out_mp.CopyFrom(in_mp)
-        out_mp.graph.ClearField('node')
-        self.out_mp_ = out_mp
-
-        defined = set([i.name for i in list(in_mp.graph.input) + list(in_mp.graph.initializer)])
-        pending_nodes = list(in_mp.graph.node)
-
-        while pending_nodes:
-            ready_nodes = [pn for pn in pending_nodes if not pn.input or all([i in defined for i in pn.input if i])]
-            for rn in ready_nodes:
-                self.out_mp_.graph.node.add().CopyFrom(rn)
-                defined.update(rn.output)
-                pending_nodes.remove(rn)
-            if not ready_nodes:
-                break
-
-        if pending_nodes and self.verbose_ > 0:
-            print('SymbolicShapeInference: orphaned nodes discarded: ')
-            print(*[n.op_type + ': ' + n.output[0] for n in pending_nodes], sep='\n')
-
+        self.out_mp_ = onnx.ModelProto()
+        self.out_mp_.CopyFrom(in_mp)
         self.initializers_ = dict([(i.name, i) for i in self.out_mp_.graph.initializer])
         self.known_vi_ = dict([(i.name, i) for i in list(self.out_mp_.graph.input)])
         self.known_vi_.update(dict([(i.name, helper.make_tensor_value_info(i.name, i.data_type, list(i.dims))) for i in self.out_mp_.graph.initializer]))
@@ -358,8 +339,6 @@ class SymbolicShapeInference:
         symbolic_shape_inference = SymbolicShapeInference(self.int_max_, self.auto_merge_, self.guess_output_rank_, self.verbose_)
         all_shapes_inferred = False
         symbolic_shape_inference._preprocess(self.tmp_mp_)
-        # note that after _preprocess, Constant node will be converted to initializer and should be appended to subgraph.initializer
-        subgraph.initializer.extend([i for i in symbolic_shape_inference.out_mp_.graph.initializer if i.name not in subgraph_implicit_input and i.name not in subgraph_inputs])
         symbolic_shape_inference.suggested_merge_ = self.suggested_merge_.copy()
         while symbolic_shape_inference.run_:
             all_shapes_inferred = symbolic_shape_inference._infer_impl(self.tmp_mp_, self.sympy_data_.copy())
