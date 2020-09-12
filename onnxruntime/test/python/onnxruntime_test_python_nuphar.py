@@ -667,7 +667,7 @@ class TestNuphar(unittest.TestCase):
             sess = onnxrt.InferenceSession(matmul_model_name)
             actual_y = sess.run([], test_inputs)
 
-            assert np.allclose(expected_y, actual_y)
+            assert np.allclose(expected_y, actual_y, atol=1e-7)
             print("finished " + matmul_model_name)
 
     def test_symbolic_shape_infer(self):
