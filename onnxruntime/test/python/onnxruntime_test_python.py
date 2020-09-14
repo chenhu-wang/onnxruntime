@@ -9,6 +9,8 @@ import onnxruntime as onnxrt
 import threading
 import sys
 from helper import get_name
+from pathlib import Path
+import subprocess
 
 class TestInferenceSession(unittest.TestCase):
 
@@ -712,6 +714,18 @@ class TestInferenceSession(unittest.TestCase):
         so3.register_custom_ops_library(shared_library)
         sess3 = onnxrt.InferenceSession(custom_op_model, so3)
 
+    def test_symbolic_shape_infer(self):
+        cwd = os.getcwd()
+        test_model_dir = os.path.join(cwd, '..', 'models')
+        for filename in Path(test_model_dir).rglob('*.onnx'):
+            if filename.name.startswith('.'):
+                continue  # skip some bad model files
+            subprocess.run([
+                sys.executable, '-m', 'onnxruntime.tools.symbolic_shape_infer', '--input',
+                str(filename), '--auto_merge', '--int_max=100000', '--guess_output_rank'
+            ],
+                           check=True,
+                           cwd=cwd)
 
 if __name__ == '__main__':
     unittest.main()
