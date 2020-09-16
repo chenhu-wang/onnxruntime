@@ -19,9 +19,6 @@ jobs:
     displayName: Build full onnxruntime
     inputs:
       script: |
-        # copy the test data to a separated folder
-        mkdir -p $HOME/.test_data
-        cp -Rf $(Build.SourcesDirectory)/onnxruntime/test/testdata/ort_minimal_e2e_test_data $HOME/.test_data
         mkdir -p $HOME/.onnx
         # build a full ORT first
         docker run --rm \
