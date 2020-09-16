@@ -16,7 +16,6 @@ jobs:
       command: login
       addPipelineData: false
   - task: CmdLine@2
-    displayName: Build full onnxruntime
     inputs:
       script: |
         # this folder is for the models to be excluded

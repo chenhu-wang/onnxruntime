@@ -45,7 +45,7 @@ mkdir -p /home/onnxruntimedev/.test_data/model_to_exclude
 cp /onnxruntime_src/onnxruntime/test/testdata/ort_github_issue_4031.onnx /home/onnxruntimedev/.models_to_exclude
 
 # clear the previous build
-rm -rf /build/*
+rm -rf /build/Debug
 
 # build a minimal build with included ops and models
 /opt/python/cp37-cp37m/bin/python3 /onnxruntime_src/tools/ci_build/build.py \
