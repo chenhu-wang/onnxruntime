@@ -16,25 +16,38 @@ jobs:
       command: login
       addPipelineData: false
   - task: CmdLine@2
+    displayName: Build full onnxruntime and generate ort format test files
+    inputs:
+      script: |
+        mkdir -p $HOME/.onnx
+        # build a full ORT first
+        docker run --rm \
+          --volume $(Build.SourcesDirectory):/onnxruntime_src \
+          --volume $(Build.BinariesDirectory):/build \
+          --volume $HOME/.test_data:/home/onnxruntimedev/.test_data \
+          -e ALLOW_RELEASED_ONNX_OPSET_ONLY=1 \
+          -e NIGHTLY_BUILD \
+          -e BUILD_BUILDNUMBER \
+          onnxruntimeregistry.azurecr.io/internal/azureml/onnxruntimecpubuild:ch36 \
+            /bin/bash /onnxruntime_src/tools/ci_build/github/linux/ort_minimal/build_full_ort_and_create_ort_file.sh
+      workingDirectory: $(Build.SourcesDirectory)
+  - task: CmdLine@2
+    displayName: Build minimal onnxruntime and run tests
     inputs:
       script: |
         # this folder is for the models to be excluded
         mkdir -p $HOME/.models_to_exclude
-        mkdir -p $HOME/.onnx
         # build a full ORT first
         docker run --rm \
-          --volume /data/onnx:/data/onnx:ro \
           --volume $(Build.SourcesDirectory):/onnxruntime_src \
           --volume $(Build.BinariesDirectory):/build \
-          --volume /data/models:/build/models:ro \
-          --volume $HOME/.onnx:/home/onnxruntimedev/.onnx \
           --volume $HOME/.test_data:/home/onnxruntimedev/.test_data \
           --volume $HOME/.models_to_exclude:/home/onnxruntimedev/.models_to_exclude \
           -e ALLOW_RELEASED_ONNX_OPSET_ONLY=1 \
           -e NIGHTLY_BUILD \
           -e BUILD_BUILDNUMBER \
           onnxruntimeregistry.azurecr.io/internal/azureml/onnxruntimecpubuild:ch36 \
-            /bin/bash /onnxruntime_src/tools/ci_build/github/linux/ort_minimal/build_full_ort_and_create_ort_file.sh
+            /bin/bash /onnxruntime_src/tools/ci_build/github/linux/ort_minimal/build_minimal_ort_and_run_tests.sh
       workingDirectory: $(Build.SourcesDirectory)
   - task: Docker@2
     displayName: logout
