@@ -19,6 +19,8 @@ jobs:
     displayName: Build full onnxruntime
     inputs:
       script: |
+        # this folder is for the models to be excluded
+        mkdir -p $HOME/.models_to_exclude
         mkdir -p $HOME/.onnx
         # build a full ORT first
         docker run --rm \
@@ -28,6 +30,7 @@ jobs:
           --volume /data/models:/build/models:ro \
           --volume $HOME/.onnx:/home/onnxruntimedev/.onnx \
           --volume $HOME/.test_data:/home/onnxruntimedev/.test_data \
+          --volume $HOME/.models_to_exclude:/home/onnxruntimedev/.models_to_exclude \
           -e ALLOW_RELEASED_ONNX_OPSET_ONLY=1 \
           -e NIGHTLY_BUILD \
           -e BUILD_BUILDNUMBER \
