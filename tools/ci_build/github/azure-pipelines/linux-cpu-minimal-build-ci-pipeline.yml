@@ -16,6 +16,7 @@ jobs:
       command: login
       addPipelineData: false
   - task: CmdLine@2
+    displayName: Build full onnxruntime
     inputs:
       script: |
         mkdir -p $HOME/.onnx
@@ -44,6 +45,16 @@ jobs:
           cp -Rf $(Build.SourcesDirectory)/onnxruntime/test/testdata/ort_minimal_e2e_test_data $HOME/.test_data
           # install python wheel from the full build
           /opt/python/cp37-cp37m/bin/python3 -m pip install -U $(Build.BinariesDirectory)/Debug/dist/*
+      workingDirectory: $(Build.SourcesDirectory)
+  - task: CmdLine@2
+    displayName: Create ORT model
+    inputs:
+      script: |
+          # copy the test data to a separated folder
+          mkdir -p $HOME/.test_data
+          cp -Rf $(Build.SourcesDirectory)/onnxruntime/test/testdata/ort_minimal_e2e_test_data $HOME/.test_data
+          # install python wheel from the full build
+          /usr/bin/python3 -m pip install -U $(Build.BinariesDirectory)/Debug/dist/*
       workingDirectory: $(Build.SourcesDirectory)
   - task: Docker@2
     displayName: logout
