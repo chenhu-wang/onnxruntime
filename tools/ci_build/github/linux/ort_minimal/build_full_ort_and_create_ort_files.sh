@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# This script will run a full ORT build and use the python package built to generate ort format test files,
+# and the exclude ops config file, which will be used in the build_minimal_ort_and_run_tests.sh
 set -e -o -x
 
 EXIT_CODE=1
@@ -30,10 +33,10 @@ find /home/onnxruntimedev/.test_data -type f -name "*.onnx" -exec /opt/python/cp
 # delete the original *.onnx file since we only need to *.optimized.onnx file for generating exclude ops config file
 find /home/onnxruntimedev/.test_data -type f -name "*.onnx" -not -name "*.optimized.onnx" -delete
 
-# generate a exclude ops config file
+# generate a included ops config file
 /opt/python/cp37-cp37m/bin/python3 /onnxruntime_src/tools/ci_build/exclude_unused_ops.py \
     --model_path /home/onnxruntimedev/.test_data \
-    --write_combined_config_to /home/onnxruntimedev/.test_data/exclude_unused_ops_config.txt
+    --write_combined_config_to /home/onnxruntimedev/.test_data/included_ops_config.txt
 
 # delete all the .onnx files, because the minimal build will not run on onnx files
 find /home/onnxruntimedev/.test_data -type f -name "*.onnx" -delete

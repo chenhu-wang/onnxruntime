@@ -35,14 +35,14 @@ jobs:
     displayName: Build minimal onnxruntime and run tests
     inputs:
       script: |
-        # this folder is for the models to be excluded
-        mkdir -p $HOME/.models_to_exclude
+        # this folder is for the models to be included
+        mkdir -p $HOME/.models_to_include
         # build a full ORT first
         docker run --rm \
           --volume $(Build.SourcesDirectory):/onnxruntime_src \
           --volume $(Build.BinariesDirectory):/build \
           --volume $HOME/.test_data:/home/onnxruntimedev/.test_data \
-          --volume $HOME/.models_to_exclude:/home/onnxruntimedev/.models_to_exclude \
+          --volume $HOME/.models_to_include:/home/onnxruntimedev/.models_to_include \
           -e ALLOW_RELEASED_ONNX_OPSET_ONLY=1 \
           -e NIGHTLY_BUILD \
           -e BUILD_BUILDNUMBER \
