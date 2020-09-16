@@ -30,7 +30,7 @@ jobs:
           -e ALLOW_RELEASED_ONNX_OPSET_ONLY=1 \
           -e NIGHTLY_BUILD \
           -e BUILD_BUILDNUMBER \
-          onnxruntimeregistry.azurecr.io/internal/azureml/onnxruntimecpubuild:ch2j \
+          onnxruntimeregistry.azurecr.io/internal/azureml/onnxruntimecpubuild:ch36 \
             /opt/python/cp37-cp37m/bin/python3 /onnxruntime_src/tools/ci_build/build.py \
               --build_dir /build --cmake_generator Ninja \
               --config Debug \
@@ -40,11 +40,6 @@ jobs:
               --skip_tests \
               --enable_pybind \
               --cmake_extra_defines PYTHON_INCLUDE_DIR=/opt/python/cp37-cp37m/include/python3.7m PYTHON_LIBRARY=/usr/lib64/librt.so
-          # copy the test data to a separated folder
-          mkdir -p $HOME/.test_data
-          cp -Rf $(Build.SourcesDirectory)/onnxruntime/test/testdata/ort_minimal_e2e_test_data $HOME/.test_data
-          # install python wheel from the full build
-          /opt/python/cp37-cp37m/bin/python3 -m pip install -U $(Build.BinariesDirectory)/Debug/dist/*
       workingDirectory: $(Build.SourcesDirectory)
   - task: CmdLine@2
     displayName: Create ORT model
