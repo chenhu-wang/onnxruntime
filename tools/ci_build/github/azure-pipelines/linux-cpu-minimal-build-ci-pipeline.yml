@@ -34,8 +34,7 @@ jobs:
           -e ALLOW_RELEASED_ONNX_OPSET_ONLY=1 \
           -e NIGHTLY_BUILD \
           -e BUILD_BUILDNUMBER \
-          onnxruntimeregistry.azurecr.io/internal/azureml/onnxruntimecpubuild:ch36 \
-            /onnxruntime_src/tools/ci_build/github/linux/ort_minimal/build_full_ort_and_create_ort_file.sh
+          /onnxruntime_src/tools/ci_build/github/linux/ort_minimal/build_full_ort_and_create_ort_file.sh
       workingDirectory: $(Build.SourcesDirectory)
   - task: Docker@2
     displayName: logout
