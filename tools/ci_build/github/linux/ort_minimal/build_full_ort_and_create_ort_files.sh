@@ -2,9 +2,7 @@
 
 # This script will run a full ORT build and use the python package built to generate ort format test files,
 # and the exclude ops config file, which will be used in the build_minimal_ort_and_run_tests.sh
-set -e -o -x
-
-EXIT_CODE=1
+set -e
 
 # run a full build of ORT
 # need the ort python package to generate the ORT format files
@@ -27,8 +25,8 @@ mkdir -p /home/onnxruntimedev/.test_data
 cp -Rf /onnxruntime_src/onnxruntime/test/testdata/ort_minimal_e2e_test_data /home/onnxruntimedev/.test_data
 
 # convert the onnx models the $HOME/.test_data to ort model
-find /home/onnxruntimedev/.test_data -type f -name "*.onnx" -exec /opt/python/cp37-cp37m/bin/python3 \
-    /onnxruntime_src/tools/python/convert_onnx_model_to_ort.py {} \;
+find /home/onnxruntimedev/.test_data -type f -name "*.onnx" \
+    -exec /opt/python/cp37-cp37m/bin/python3 /onnxruntime_src/tools/python/convert_onnx_model_to_ort.py {} \;
 
 # delete the original *.onnx file since we only need to *.optimized.onnx file for generating exclude ops config file
 find /home/onnxruntimedev/.test_data -type f -name "*.onnx" -not -name "*.optimized.onnx" -delete
@@ -43,8 +41,3 @@ find /home/onnxruntimedev/.test_data -type f -name "*.onnx" -delete
 
 # clear the build
 rm -rf /build/Debug
-
-EXIT_CODE=$?
-
-set -e
-exit $EXIT_CODE

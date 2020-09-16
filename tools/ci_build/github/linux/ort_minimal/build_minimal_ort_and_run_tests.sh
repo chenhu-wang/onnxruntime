@@ -6,9 +6,7 @@
 # The build will run the unit tests for the minimal build
 # Extra E2E test cases (converted by build_full_ort_and_create_ort_files.sh) will be run by onnx_test_runner
 # and then run the unit tests and
-set -e -o -x
-
-EXIT_CODE=1
+set -e
 
 # We need copy the related test files to a separated folder since the --include_ops_by_model will search the testdata folder recursively
 # and include many unnecessary ops, minimal build UT currently uses .ort format models converted from the models we copied below,
@@ -31,8 +29,3 @@ cp /onnxruntime_src/onnxruntime/test/testdata/ort_github_issue_4031.onnx /home/o
 
 # run some test
 /build/Debug/onnx_test_runner /home/onnxruntimedev/.test_data
-
-EXIT_CODE=$?
-
-set -e
-exit $EXIT_CODE
