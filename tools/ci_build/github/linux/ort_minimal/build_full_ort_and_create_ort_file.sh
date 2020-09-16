@@ -19,11 +19,24 @@ EXIT_CODE=1
 
 # copy the test data to a separated folder
 mkdir -p /home/onnxruntimedev/.test_data
-cp -Rf $(Build.SourcesDirectory)/onnxruntime/test/testdata/ort_minimal_e2e_test_data /home/onnxruntimedev/.test_data
+cp -Rf /onnxruntime_src/onnxruntime/test/testdata/ort_minimal_e2e_test_data /home/onnxruntimedev/.test_data
 
 # convert the onnx models the $HOME/.test_data to ort model
-find /home/onnxruntimedev/.test_data -type f -name "*.onnx"  -exec /opt/python/cp37-cp37m/bin/python3 \
+find /home/onnxruntimedev/.test_data -type f -name "*.onnx" -exec /opt/python/cp37-cp37m/bin/python3 \
     /onnxruntime_src/tools/python/convert_onnx_model_to_ort.py {} \;
+
+# delete the original *.onnx file since we only need to *.optimized.onnx file for generating exclude ops config file
+find /home/onnxruntimedev/.test_data -type f -name "*.onnx" -not -name "*.optimized.onnx" -delete
+
+# generate a exclude ops config file
+/opt/python/cp37-cp37m/bin/python3 /onnxruntime_src/tools/ci_build/exclude_unused_ops.py \
+    --model_path /home/onnxruntimedev/.test_data \
+    --write_combined_config_to /home/onnxruntimedev/.test_data/exclude_unused_ops_config.txt
+
+# delete all the .onnx files, because the minimal build will not run on onnx files
+find /home/onnxruntimedev/.test_data -type f -name "*.onnx" -delete
+
+# copy some ort test files
 
 EXIT_CODE=$?
 
