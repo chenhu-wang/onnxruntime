@@ -1,5 +1,5 @@
 jobs:
-- job: Linux_CPU_Minimal_E2E
+- job: Linux_CPU_Minimal_Build_E2E
   timeoutInMinutes: 120
   workspace:
     clean: all
@@ -29,7 +29,7 @@ jobs:
           -e NIGHTLY_BUILD \
           -e BUILD_BUILDNUMBER \
           onnxruntimeregistry.azurecr.io/internal/azureml/onnxruntimecpubuild:ch36 \
-            /bin/bash /onnxruntime_src/tools/ci_build/github/linux/ort_minimal/build_full_ort_and_create_ort_file.sh
+            /bin/bash /onnxruntime_src/tools/ci_build/github/linux/ort_minimal/build_full_ort_and_create_ort_files.sh
       workingDirectory: $(Build.SourcesDirectory)
   - task: CmdLine@2
     displayName: Build minimal onnxruntime and run tests
