@@ -48,7 +48,7 @@ def as_scalar(x):
         assert len(x) == 1
         return x[0]
     elif type(x) == np.ndarray:
-        return np.asscalar(x)
+        return x.item()
     else:
         return x
 
@@ -406,7 +406,7 @@ class SymbolicShapeInference:
                 if len(v.shape) > 1:
                     new_v = None # ignore value for rank > 1
                 elif len(v.shape) == 0:
-                    new_v = int(np.asscalar(v))
+                    new_v = int(v.item())
                 else:
                     assert len(v.shape) == 1
                     new_v = [int(vv) for vv in v]
