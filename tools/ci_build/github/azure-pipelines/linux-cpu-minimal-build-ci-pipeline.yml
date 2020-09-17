@@ -58,8 +58,6 @@ jobs:
     displayName: Build minimal onnxruntime and disable exception
     inputs:
       script: |
-        # Clear the previous build
-        rm -rf $(Build.BinariesDirectory)/Debug
         # We will try to build the ORT minimal with exception disabled
         # Only the building process is verified here, no test will be performed
         docker run --rm \

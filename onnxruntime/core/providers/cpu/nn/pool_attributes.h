@@ -152,7 +152,7 @@ struct PoolAttributes {
           break;
         }
         default: {
-          throw std::runtime_error("Unsupported AutoPad Type.");
+          ORT_THROW("Unsupported AutoPad Type.");
         }
       }
     } else {
