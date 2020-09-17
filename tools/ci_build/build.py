@@ -1115,13 +1115,13 @@ def run_training_pipeline_e2e_tests(cwd):
         log.debug('RUN: mpirun -n {} {} orttraining_run_glue.py'.format(ngpus, sys.executable))
         run_subprocess(['mpirun', '-n', str(ngpus), sys.executable, 'orttraining_run_glue.py'], cwd=cwd)
     if ngpus == 4:
-        command = "mpirun -n {}  ./onnxruntime_training_bert --ort_log_severity 1 --optimizer=Lamb --learning_rate=3e-3",
-        " --max_seq_length=128 --max_predictions_per_seq=20 --warmup_ratio=0.2843 --warmup_mode=Poly ",
-        "--model_name /bert_ort/bert_models/nv/bert-large/bert-large-uncased_L_24_H_1024_A_16_V_30528_S_512_Dp_0.1_optimized_layer_norm_opset12 ",
-        "--train_data_dir /bert_data/128/books_wiki_en_corpus/train --test_data_dir  /bert_data/128/books_wiki_en_corpus/test ",
-        "--display_loss_steps 1 --use_nccl --pipeline_parallel_size 4 ",
-        "--cut_group_info 1149:407-1219/1341/1463/1585/1707/1829,1881:407-1951/2073/2195/2317/2439/2561,2613:407-2683/2805/2927/3049/3171/3293 ",
-        "--use_mixed_precision --allreduce_in_fp16 --gradient_accumulation_steps 5 --num_train_steps 10 --train_batch_size 1".format(ngpus)
+        command = "mpirun -n 4 ./onnxruntime_training_bert --ort_log_severity 1 --optimizer=Lamb --learning_rate=3e-3" \
+            " --max_seq_length=128 --max_predictions_per_seq=20 --warmup_ratio=0.2843 --warmup_mode=Poly " \
+            "--model_name /bert_ort/bert_models/nv/bert-large/bert-large-uncased_L_24_H_1024_A_16_V_30528_S_512_Dp_0.1_optimized_layer_norm_opset12 " \
+            "--train_data_dir /bert_data/128/books_wiki_en_corpus/train --test_data_dir  /bert_data/128/books_wiki_en_corpus/test " \
+            "--display_loss_steps 1 --use_nccl --pipeline_parallel_size 4 " \
+            "--cut_group_info 1149:407-1219/1341/1463/1585/1707/1829,1881:407-1951/2073/2195/2317/2439/2561,2613:407-2683/2805/2927/3049/3171/3293 " \
+            "--use_mixed_precision --allreduce_in_fp16 --gradient_accumulation_steps 5 --num_train_steps 10 --train_batch_size 1"
         log.debug('RUN: ', command)
         run_subprocess([command], cwd=cwd)
 
