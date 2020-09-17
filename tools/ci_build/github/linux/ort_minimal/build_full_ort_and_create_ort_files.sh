@@ -2,6 +2,7 @@
 
 # This script will run a full ORT build and use the python package built to generate ort format test files,
 # and the exclude ops config file, which will be used in the build_minimal_ort_and_run_tests.sh
+
 set -e
 
 # run a full build of ORT
