@@ -97,6 +97,9 @@ def parse_arguments():
         "--enable_training_python_frontend_e2e_tests", action="store_true",
         help="Enable the pytorch frontend training tests.")
     parser.add_argument(
+        "--enable_training_pipeline_e2e_tests", action="store_true",
+        help="Enable the pipeline c++ e2e tests.")
+    parser.add_argument(
         "--use_horovod", action='store_true', help="Enable Horovod.")
     parser.add_argument(
         "--mpi_home", help="Path to MPI installation dir")
@@ -1094,17 +1097,50 @@ def run_training_python_frontend_e2e_tests(cwd):
         sys.executable, 'orttraining_test_transformers.py',
         'BertModelTest.test_for_pretraining_mixed_precision_with_gradient_accumulation'], cwd=cwd)
 
+def run_training_pipeline_e2e_tests(cwd):
+    # frontend tests are to be added here:
+    log.info("Running python frontend e2e tests.")
+
+    import torch
+    ngpus = torch.cuda.device_count()
+
+    # pipeline cannot run on 1 GPU
+    if ngpus <=1:
+        return
+
+    if ngpus == 2:
+        log.debug('RUN: mpirun -n {} {} orttraining_run_glue.py'.format(ngpus, sys.executable))
+        run_subprocess(['mpirun', '-n', str(ngpus), sys.executable, 'orttraining_run_glue.py'], cwd=cwd)
+    if ngpus == 3:
+        log.debug('RUN: mpirun -n {} {} orttraining_run_glue.py'.format(ngpus, sys.executable))
+        run_subprocess(['mpirun', '-n', str(ngpus), sys.executable, 'orttraining_run_glue.py'], cwd=cwd)
+    if ngpus == 4:
+        command = "mpirun -n {}  ./onnxruntime_training_bert --ort_log_severity 1 --optimizer=Lamb --learning_rate=3e-3",
+        " --max_seq_length=128 --max_predictions_per_seq=20 --warmup_ratio=0.2843 --warmup_mode=Poly ",
+        "--model_name /bert_ort/bert_models/nv/bert-large/bert-large-uncased_L_24_H_1024_A_16_V_30528_S_512_Dp_0.1_optimized_layer_norm_opset12 ",
+        "--train_data_dir /bert_data/128/books_wiki_en_corpus/train --test_data_dir  /bert_data/128/books_wiki_en_corpus/test ",
+        "--display_loss_steps 1 --use_nccl --pipeline_parallel_size 4 ",
+        "--cut_group_info 1149:407-1219/1341/1463/1585/1707/1829,1881:407-1951/2073/2195/2317/2439/2561,2613:407-2683/2805/2927/3049/3171/3293 ",
+        "--use_mixed_precision --allreduce_in_fp16 --gradient_accumulation_steps 5 --num_train_steps 10 --train_batch_size 1".format(ngpus)
+        log.debug('RUN: ', command)
+        run_subprocess([command], cwd=cwd)
 
 def run_onnxruntime_tests(args, source_dir, ctest_path, build_dir, configs):
     for config in configs:
         log.info("Running tests for %s configuration", config)
         cwd = get_config_build_dir(build_dir, config)
 
-        if args.enable_training and args.use_cuda and args.enable_training_python_frontend_e2e_tests:
+        # if args.enable_training and args.use_cuda and args.enable_training_python_frontend_e2e_tests:
+        #     # run frontend tests for orttraining-linux-gpu-frontend_test-ci-pipeline.
+        #     # this is not a PR merge test so skip other non-frontend tests.
+        #     run_training_python_frontend_e2e_tests(cwd=cwd)
+        #     run_training_python_frontend_tests(cwd=cwd)
+        #     continue
+
+        if args.enable_training and args.use_cuda and args.enable_training_pipeline_e2e_tests:
             # run frontend tests for orttraining-linux-gpu-frontend_test-ci-pipeline.
             # this is not a PR merge test so skip other non-frontend tests.
-            run_training_python_frontend_e2e_tests(cwd=cwd)
-            run_training_python_frontend_tests(cwd=cwd)
+            run_training_pipeline_e2e_tests(cwd=cwd)
             continue
 
         if args.android:
