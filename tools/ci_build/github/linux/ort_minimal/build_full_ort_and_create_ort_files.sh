@@ -22,7 +22,6 @@ set -e
 /opt/python/cp37-cp37m/bin/python3  -m pip install -U /build/Debug/dist/*
 
 # copy the test data to a separated folder
-mkdir -p /home/onnxruntimedev/.test_data
 cp -Rf /onnxruntime_src/onnxruntime/test/testdata/ort_minimal_e2e_test_data /home/onnxruntimedev/.test_data
 
 # convert the onnx models the $HOME/.test_data to ort model

@@ -19,6 +19,8 @@ jobs:
     displayName: Build full onnxruntime and generate ORT format test files
     inputs:
       script: |
+        # Create a folder for all test data
+        mkdir -p $HOME/.test_data
         docker run --rm \
           --volume $(Build.SourcesDirectory):/onnxruntime_src \
           --volume $(Build.BinariesDirectory):/build \
