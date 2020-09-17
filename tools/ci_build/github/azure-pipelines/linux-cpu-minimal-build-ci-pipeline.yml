@@ -16,11 +16,9 @@ jobs:
       command: login
       addPipelineData: false
   - task: CmdLine@2
-    displayName: Build full onnxruntime and generate ort format test files
+    displayName: Build full onnxruntime and generate ORT format test files
     inputs:
       script: |
-        mkdir -p $HOME/.onnx
-        # build a full ORT first
         docker run --rm \
           --volume $(Build.SourcesDirectory):/onnxruntime_src \
           --volume $(Build.BinariesDirectory):/build \
@@ -35,8 +33,6 @@ jobs:
     displayName: Build minimal onnxruntime and run tests
     inputs:
       script: |
-        # this folder is for the models to be included
-        # build a full ORT first
         docker run --rm \
           --volume $(Build.SourcesDirectory):/onnxruntime_src \
           --volume $(Build.BinariesDirectory):/build \
