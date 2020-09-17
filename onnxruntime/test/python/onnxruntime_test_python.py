@@ -715,11 +715,6 @@ class TestInferenceSession(unittest.TestCase):
         sess3 = onnxrt.InferenceSession(custom_op_model, so3)
 
     def test_symbolic_shape_infer(self):
-        # HACKHACK: override onnx to 1.5.0 as some model tests failed in later onnx shape inference
-        # TODO: remove the onnx override hack once the shape inference regression in onnx is fixed
-        import pip
-        pip.main(['uninstall', '-y', 'onnx'])
-        pip.main(['install', 'onnx==1.5.0'])
         cwd = os.getcwd()
         test_model_dir = os.path.join(cwd, '..', 'models')
         for filename in Path(test_model_dir).rglob('*.onnx'):
@@ -729,8 +724,6 @@ class TestInferenceSession(unittest.TestCase):
                             str(filename), '--auto_merge', '--int_max=100000', '--guess_output_rank'],
                            check=True,
                            cwd=cwd)
-        #  HACKHACK: restore onnx to the same one as in tools/ci_build/github/linux/docker/scripts/requirements.txt
-        pip.main(['install', 'onnx==1.7.0', '--upgrade'])
 
 if __name__ == '__main__':
     unittest.main()

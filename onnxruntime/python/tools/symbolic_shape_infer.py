@@ -328,20 +328,17 @@ class SymbolicShapeInference:
                         self.symbolic_dims_[str(new_dim)] = new_dim
 
     def _onnx_infer_single_node(self, node):
-        # skip onnx shape inference for Scan/Loop
-        skip_infer = node.op_type in ['Scan', 'Loop']
+        # skip onnx shape inference for some ops, as they are handled in _infer_*
+        skip_infer = node.op_type in ['Scan', 'Loop', 'SplitToSequence', 'ZipMap']
         if not skip_infer:
             # run single node inference with self.known_vi_ shapes
             # note that inference rely on initializer values is not handled
             # as we don't copy initializer weights to tmp_graph for inference speed purpose
-            if node.op_type == 'SplitToSequence':
-                make_value_info_func = helper.make_sequence_value_info
-            else:
-                make_value_info_func = helper.make_tensor_value_info
             tmp_graph = helper.make_graph([node],
                                           'tmp',
                                           [self.known_vi_[i] for i in node.input if i],
-                                          [make_value_info_func(i, onnx.TensorProto.UNDEFINED, None) for i in node.output])
+                                          [helper.make_tensor_value_info(i, onnx.TensorProto.UNDEFINED, None) for i in node.output])
+
             self.tmp_mp_.graph.CopyFrom(tmp_graph)
             self.tmp_mp_ = shape_inference.infer_shapes(self.tmp_mp_)
         for i_o in range(len(node.output)):
@@ -349,6 +346,8 @@ class SymbolicShapeInference:
             vi = self.out_mp_.graph.value_info.add()
             if not skip_infer:
                 vi.CopyFrom(self.tmp_mp_.graph.output[i_o])
+            else:
+                vi.name = o
             self.known_vi_[o] = vi
 
     def _onnx_infer_subgraph(self, node, subgraph, use_node_input=True):
