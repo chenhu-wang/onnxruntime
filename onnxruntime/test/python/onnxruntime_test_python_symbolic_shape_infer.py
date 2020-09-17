@@ -21,7 +21,8 @@ class TestSymbolicShapeInference(unittest.TestCase):
                 output_model=None,
                 auto_merge=True,
                 int_max=100000,
-                guess_output_rank=True)
+                guess_output_rank=True,
+                verbose=3)
 
 if __name__ == '__main__':
     unittest.main()
