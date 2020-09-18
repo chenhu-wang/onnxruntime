@@ -1060,6 +1060,14 @@ def run_training_python_frontend_e2e_tests(cwd):
     ngpus = torch.cuda.device_count()
     if ngpus > 1:
         log.debug('RUN: mpirun -n {} {} orttraining_run_glue.py'.format(ngpus, sys.executable))
+
+        log.debug(cwd)
+
+        import os
+        files_path = [os.path.abspath(x) for x in os.listdir()]
+        print(files_path)
+        log.debug(files_path)
+
         run_subprocess(['mpirun', '-n', str(ngpus), sys.executable, 'orttraining_run_glue.py'], cwd=cwd)
 
     # with orttraining_run_glue.py.
@@ -1136,12 +1144,12 @@ def run_onnxruntime_tests(args, source_dir, ctest_path, build_dir, configs):
         log.info("Running tests for %s configuration", config)
         cwd = get_config_build_dir(build_dir, config)
 
-        # if args.enable_training and args.use_cuda and args.enable_training_python_frontend_e2e_tests:
-        #     # run frontend tests for orttraining-linux-gpu-frontend_test-ci-pipeline.
-        #     # this is not a PR merge test so skip other non-frontend tests.
-        #     run_training_python_frontend_e2e_tests(cwd=cwd)
-        #     run_training_python_frontend_tests(cwd=cwd)
-        #     continue
+        if args.enable_training and args.use_cuda and args.enable_training_python_frontend_e2e_tests:
+            # run frontend tests for orttraining-linux-gpu-frontend_test-ci-pipeline.
+            # this is not a PR merge test so skip other non-frontend tests.
+            run_training_python_frontend_e2e_tests(cwd=cwd)
+            run_training_python_frontend_tests(cwd=cwd)
+            continue
 
         if args.enable_training and args.use_cuda and args.enable_training_pipeline_e2e_tests:
             # run frontend tests for orttraining-linux-gpu-frontend_test-ci-pipeline.
