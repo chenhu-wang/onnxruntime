@@ -1134,22 +1134,30 @@ def run_training_pipeline_e2e_tests(cwd):
         log.debug(cwd)
 
         import os
-        files_path = [os.path.abspath(x) for x in os.listdir()]
+        files_path = [os.path.abspath(x) for x in os.listdir(cwd)]
         print(files_path)
         log.debug(files_path)
-        run_subprocess([command], cwd=cwd)
+        # run_subprocess([command], cwd=cwd)
+        run_subprocess(['mpirun', '-n', str(ngpus), './onnxruntime_training_bert',
+                        '--ort_log_severity', '1', '--optimizer=Lamb', '--learning_rate=3e-3',
+                        '--max_seq_length=128', '--max_predictions_per_seq=20', '--warmup_ratio=0.2843', '--warmup_mode=Poly',
+                        '--model_name', '/bert_ort/bert_models/nv/bert-large/bert-large-uncased_L_24_H_1024_A_16_V_30528_S_512_Dp_0.1_optimized_layer_norm_opset12',
+                        '--train_data_dir', '/bert_data/128/books_wiki_en_corpus/train', '--test_data_dir', '/bert_data/128/books_wiki_en_corpus/test',
+                        '--display_loss_steps', '1', '--use_nccl', '--pipeline_parallel_size', '4',
+                        '--cut_group_info', '1149:407-1219/1341/1463/1585/1707/1829,1881:407-1951/2073/2195/2317/2439/2561,2613:407-2683/2805/2927/3049/3171/3293',
+                        '--use_mixed_precision', '--allreduce_in_fp16', '--gradient_accumulation_steps', '5', '--num_train_steps', '10', '--train_batch_size', '1'], cwd=cwd)
 
 def run_onnxruntime_tests(args, source_dir, ctest_path, build_dir, configs):
     for config in configs:
         log.info("Running tests for %s configuration", config)
         cwd = get_config_build_dir(build_dir, config)
 
-        if args.enable_training and args.use_cuda and args.enable_training_python_frontend_e2e_tests:
-            # run frontend tests for orttraining-linux-gpu-frontend_test-ci-pipeline.
-            # this is not a PR merge test so skip other non-frontend tests.
-            run_training_python_frontend_e2e_tests(cwd=cwd)
-            run_training_python_frontend_tests(cwd=cwd)
-            continue
+        # if args.enable_training and args.use_cuda and args.enable_training_python_frontend_e2e_tests:
+        #     # run frontend tests for orttraining-linux-gpu-frontend_test-ci-pipeline.
+        #     # this is not a PR merge test so skip other non-frontend tests.
+        #     run_training_python_frontend_e2e_tests(cwd=cwd)
+        #     run_training_python_frontend_tests(cwd=cwd)
+        #     continue
 
         if args.enable_training and args.use_cuda and args.enable_training_pipeline_e2e_tests:
             # run frontend tests for orttraining-linux-gpu-frontend_test-ci-pipeline.
