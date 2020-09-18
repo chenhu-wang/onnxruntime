@@ -7,6 +7,7 @@ import os
 from onnxruntime.tools.symbolic_shape_infer import SymbolicShapeInference
 import sys
 from pathlib import Path
+import subprocess
 
 class TestSymbolicShapeInference(unittest.TestCase):
     def test_symbolic_shape_infer(self):
@@ -16,13 +17,10 @@ class TestSymbolicShapeInference(unittest.TestCase):
             if filename.name.startswith('.'):
                 continue  # skip some bad model files
             print("Running symbolic shape inference on : " + str(filename))
-            SymbolicShapeInference.infer_shapes(
-                input_model=str(filename),
-                output_model=None,
-                auto_merge=True,
-                int_max=100000,
-                guess_output_rank=True,
-                verbose=3)
+            subprocess.run([sys.executable, '-m', 'onnxruntime.nuphar.symbolic_shape_infer', '--input',
+                            str(filename), '--auto_merge', '--int_max=100000', '--guess_output_rank'],
+                           check=True,
+                           cwd=cwd)
 
 if __name__ == '__main__':
     unittest.main()
