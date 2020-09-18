@@ -17,7 +17,7 @@ class TestSymbolicShapeInference(unittest.TestCase):
             if filename.name.startswith('.'):
                 continue  # skip some bad model files
             print("Running symbolic shape inference on : " + str(filename))
-            subprocess.run([sys.executable, '-m', 'onnxruntime.nuphar.symbolic_shape_infer', '--input',
+            subprocess.run([sys.executable, '-m', 'onnxruntime.tools.symbolic_shape_infer', '--input',
                             str(filename), '--auto_merge', '--int_max=100000', '--guess_output_rank'],
                            check=True,
                            cwd=cwd)
