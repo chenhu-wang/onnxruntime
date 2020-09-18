@@ -1122,7 +1122,13 @@ def run_training_pipeline_e2e_tests(cwd):
             "--display_loss_steps 1 --use_nccl --pipeline_parallel_size 4 " \
             "--cut_group_info 1149:407-1219/1341/1463/1585/1707/1829,1881:407-1951/2073/2195/2317/2439/2561,2613:407-2683/2805/2927/3049/3171/3293 " \
             "--use_mixed_precision --allreduce_in_fp16 --gradient_accumulation_steps 5 --num_train_steps 10 --train_batch_size 1"
-        log.debug('RUN: ', command)
+        log.debug('RUN: ' + command)
+        log.debug(cwd)
+
+        import os
+        files_path = [os.path.abspath(x) for x in os.listdir()]
+        print(files_path)
+        log.debug(files_path)
         run_subprocess([command], cwd=cwd)
 
 def run_onnxruntime_tests(args, source_dir, ctest_path, build_dir, configs):
